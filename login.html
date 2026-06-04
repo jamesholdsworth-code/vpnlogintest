@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureVault — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0b0e14;
+    --surface:  #13161f;
+    --border:   #1e2330;
+    --accent:   #4f8ef7;
+    --accent2:  #7c5cfc;
+    --text:     #e8eaf0;
+    --muted:    #5a607a;
+    --danger:   #f75c5c;
+    --success:  #4fdb8f;
+    --warn:     #f7b94f;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* ── LEFT: Login panel ─────────────────────────────── */
+  .login-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    position: relative;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+  }
+
+  .logo {
+    position: absolute;
+    top: 2rem; left: 2.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent); }
+
+  .login-box {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .login-box h1 {
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: -.02em;
+  }
+  .login-box p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+    margin-bottom: 1.25rem;
+  }
+  input:focus { border-color: var(--accent); }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover  { opacity: .9; }
+  .btn:active { transform: scale(.98); }
+  .btn.loading { opacity: .6; pointer-events: none; }
+
+  .status-bar {
+    margin-top: 1.25rem;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── RIGHT: Intelligence panel ─────────────────────── */
+  .intel-side {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+    gap: 1rem;
+    background: var(--bg);
+  }
+
+  .intel-header {
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: .75rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: .25rem;
+  }
+
+  .waiting {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    gap: 12px;
+    font-size: 13px;
+  }
+  .waiting svg { opacity: .2; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    animation: fadeUp .3s ease both;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  .card-title {
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .row .k { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .row .v {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+  }
+  .row .v.yes { color: var(--danger); }
+  .row .v.no  { color: var(--success); }
+
+  /* Risk badge */
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .risk-low    { background: rgba(79,219,143,.12); color: var(--success); border: 1px solid rgba(79,219,143,.2); }
+  .risk-medium { background: rgba(247,185,79,.12);  color: var(--warn);    border: 1px solid rgba(247,185,79,.2); }
+  .risk-high   { background: rgba(247,92,92,.12);   color: var(--danger);  border: 1px solid rgba(247,92,92,.2); }
+  .risk-block  { background: rgba(247,92,92,.2);    color: var(--danger);  border: 1px solid rgba(247,92,92,.4); }
+
+  /* Score bar */
+  .score-wrap { padding: 12px 14px; }
+  .score-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .score-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-fill  { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+  /* Anomaly tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px 14px; }
+  .tag  {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(247,92,92,.1);
+    color: var(--danger);
+    border: 1px solid rgba(247,92,92,.2);
+    font-family: 'DM Mono', monospace;
+  }
+  .tag.ok {
+    background: rgba(79,219,143,.08);
+    color: var(--success);
+    border-color: rgba(79,219,143,.15);
+  }
+
+  /* GPS map placeholder */
+  .gps-box {
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+  .gps-box .gps-na { color: var(--muted); }
+
+  /* Action banner */
+  .action-banner {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .action-allow   { background: rgba(79,219,143,.1);  color: var(--success); border: 1px solid rgba(79,219,143,.2); }
+  .action-captcha { background: rgba(247,185,79,.1);  color: var(--warn);    border: 1px solid rgba(247,185,79,.2); }
+  .action-soft    { background: rgba(247,92,92,.1);   color: var(--danger);  border: 1px solid rgba(247,92,92,.2); }
+  .action-hard    { background: rgba(247,92,92,.2);   color: var(--danger);  border: 1px solid rgba(247,92,92,.4); }
+</style>
+</head>
+<body>
+
+<!-- ── LEFT: Fake login ──────────────────────────────────────── -->
+<div class="login-side">
+  <div class="logo">Secure<span>Vault</span></div>
+
+  <div class="login-box">
+    <h1>Welcome back</h1>
+    <p>Sign in to your account to continue</p>
+
+    <label>Username</label>
+    <input type="text" id="username" placeholder="you@example.com" autocomplete="off"/>
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••"/>
+
+    <button class="btn" id="loginBtn" onclick="handleLogin()">Sign in</button>
+
+    <div class="status-bar">
+      <div class="dot"></div>
+      <span id="statusText">Idle — waiting for login attempt</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── RIGHT: Intelligence output ───────────────────────────── -->
+<div class="intel-side">
+  <div class="intel-header">&#9632; Device Intelligence — Live Feed</div>
+
+  <div class="waiting" id="waiting">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+    </svg>
+    <span>Waiting for login attempt…</span>
+  </div>
+
+  <div id="output" style="display:none; display:flex; flex-direction:column; gap:10px;"></div>
+</div>
+
+<script>
+// ── Collect browser fingerprint ───────────────────────────────
+async function getWebRTCIP() {
+  return new Promise(resolve => {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      pc.createDataChannel('');
+      pc.createOffer().then(o => pc.setLocalDescription(o));
+      const found = new Set();
+      pc.onicecandidate = e => {
+        if (!e || !e.candidate) { resolve([...found].join(', ') || null); pc.close(); return; }
+        const m = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/g);
+        if (m) m.forEach(ip => { if (!ip.startsWith('0.')) found.add(ip); });
+      };
+      setTimeout(() => { resolve([...found].join(', ') || null); try { pc.close(); } catch(e){} }, 2000);
+    } catch(e) { resolve(null); }
+  });
+}
+
+function getCanvasFingerprint() {
+  try {
+    const c = document.createElement('canvas');
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px DM Sans';
+    ctx.fillStyle = '#4f8ef7';
+    ctx.fillText('SecureVault-fp-2024', 2, 2);
+    return c.toDataURL().slice(-32);
+  } catch(e) { return null; }
+}
+
+function getWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return { vendor: null, renderer: null };
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    return {
+      vendor:   ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)   : gl.getParameter(gl.VENDOR),
+      renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+    };
+  } catch(e) { return { vendor: null, renderer: null }; }
+}
+
+async function getGPS() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({
+        latitude:  pos.coords.latitude.toFixed(5),
+        longitude: pos.coords.longitude.toFixed(5),
+        accuracy:  Math.round(pos.coords.accuracy) + 'm',
+      }),
+      () => resolve(null),
+      { timeout: 5000 }
+    );
+  });
+}
+
+async function collectFingerprint(username) {
+  const nav = navigator;
+  const scr = screen;
+  const webgl = getWebGL();
+  const [webrtcIP, gps] = await Promise.all([getWebRTCIP(), getGPS()]);
+
+  return {
+    username,
+    userAgent:    nav.userAgent,
+    platform:     nav.platform,
+    language:     nav.language,
+    languages:    (nav.languages || []).join(', '),
+    screen:       `${scr.width}×${scr.height} (${scr.colorDepth}bit)`,
+    timezone:     Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezoneOffset: new Date().getTimezoneOffset(),
+    doNotTrack:   nav.doNotTrack || 'unset',
+    cookieEnabled: nav.cookieEnabled,
+    online:       nav.onLine,
+    hardwareConcurrency: nav.hardwareConcurrency || null,
+    deviceMemory: nav.deviceMemory || null,
+    maxTouchPoints: nav.maxTouchPoints || 0,
+    webrtcIP,
+    canvasFingerprint: getCanvasFingerprint(),
+    webglVendor:   webgl.vendor,
+    webglRenderer: webgl.renderer,
+    gps,
+  };
+}
+
+// ── Handle login click ────────────────────────────────────────
+async function handleLogin() {
+  const username = document.getElementById('username').value || '(empty)';
+  const btn = document.getElementById('loginBtn');
+  const status = document.getElementById('statusText');
+
+  btn.classList.add('loading');
+  btn.textContent = 'Signing in…';
+  status.textContent = 'Collecting device signals…';
+
+  const fp = await collectFingerprint(username);
+
+  status.textContent = 'Running IP analysis…';
+
+  const resp = await fetch('/api/detect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fp),
+  });
+  const data = await resp.json();
+
+  renderIntel(data);
+
+  btn.classList.remove('loading');
+  btn.textContent = 'Sign in';
+  status.textContent = 'Analysis complete — ' + data.timestamp;
+}
+
+// ── Render intelligence panel ─────────────────────────────────
+function flag(val) {
+  if (val === true)  return '<span class="v yes">YES ⚑</span>';
+  if (val === false) return '<span class="v no">NO ✓</span>';
+  return `<span class="v">${val ?? '—'}</span>`;
+}
+function val(v) { return `<span class="v">${v ?? '—'}</span>`; }
+function row(k, v) { return `<div class="row"><span class="k">${k}</span>${v}</div>`; }
+
+function scoreColor(s) {
+  if (s >= 85) return '#f75c5c';
+  if (s >= 60) return '#f7694f';
+  if (s >= 30) return '#f7b94f';
+  return '#4fdb8f';
+}
+
+function actionBanner(action) {
+  const map = {
+    allow:      ['action-allow',   '✓ Allow — low risk, pass through'],
+    captcha:    ['action-captcha', '⚠ Step-up — trigger CAPTCHA / 2FA'],
+    soft_block: ['action-soft',    '⛔ Soft block — restrict sensitive actions'],
+    hard_block: ['action-hard',    '✕ Hard block — return 403, deny access'],
+  };
+  const [cls, label] = map[action] || ['action-allow', action];
+  return `<div class="action-banner ${cls}">${label}</div>`;
+}
+
+function renderIntel(d) {
+  document.getElementById('waiting').style.display = 'none';
+  const out = document.getElementById('output');
+  out.style.display = 'flex';
+
+  const ip = d.ip, br = d.browser, loc = d.location;
+  const riskClass = 'risk-' + ip.risk_level;
+  const score = ip.risk_score;
+
+  out.innerHTML = `
+    ${actionBanner(ip.action)}
+
+    <!-- IP Intelligence -->
+    <div class="card">
+      <div class="card-title">
+        ◈ IP Intelligence
+        <span class="risk-badge ${riskClass}">${ip.risk_level.toUpperCase()} — ${score}/100</span>
+      </div>
+      <div class="score-wrap">
+        <div class="score-label"><span>Risk score</span><span>${score}/100</span></div>
+        <div class="score-track"><div class="score-fill" style="width:${score}%;background:${scoreColor(score)}"></div></div>
+      </div>
+      <div class="card-body">
+        ${row('IP Address',   val(ip.address))}
+        ${row('Location',     val(`${ip.city}, ${ip.region}, ${ip.country}`))}
+        ${row('ISP',          val(ip.isp))}
+        ${row('Organisation', val(ip.org))}
+        ${row('ASN',          val(ip.asn))}
+        ${row('VPN / Proxy',  flag(ip.is_vpn || ip.is_proxy))}
+        ${row('Tor Node',     flag(ip.is_tor))}
+        ${row('Datacenter',   flag(ip.is_datacenter))}
+      </div>
+    </div>
+
+    <!-- Anomalies -->
+    <div class="card">
+      <div class="card-title">⚑ Anomalies Detected</div>
+      <div class="tags">
+        ${d.anomalies.length
+          ? d.anomalies.map(a => `<span class="tag">${a}</span>`).join('')
+          : '<span class="tag ok">None detected</span>'
+        }
+      </div>
+    </div>
+
+    <!-- Browser Fingerprint -->
+    <div class="card">
+      <div class="card-title">◉ Browser Fingerprint</div>
+      <div class="card-body">
+        ${row('Platform',    val(br.platform))}
+        ${row('Language',    val(br.language))}
+        ${row('Screen',      val(br.screen))}
+        ${row('Timezone',    val(br.timezone))}
+        ${row('TZ Offset',   val(br.timezone_offset + ' min'))}
+        ${row('CPU Cores',   val(br.hardware_concurrency))}
+        ${row('Device RAM',  val(br.device_memory ? br.device_memory + ' GB' : '—'))}
+        ${row('Touch Points',val(br.touch_points))}
+        ${row('Do Not Track',val(br.do_not_track))}
+        ${row('Canvas FP',   val(br.canvas_fp))}
+      </div>
+    </div>
+
+    <!-- WebGL -->
+    <div class="card">
+      <div class="card-title">◈ GPU / WebGL</div>
+      <div class="card-body">
+        ${row('Vendor',   val(br.webgl_vendor))}
+        ${row('Renderer', val(br.webgl_renderer))}
+      </div>
+    </div>
+
+    <!-- WebRTC -->
+    <div class="card">
+      <div class="card-title">◉ WebRTC Leak</div>
+      <div class="card-body">
+        ${row('Local IP(s)', val(br.webrtc_ip || 'None detected'))}
+        ${br.webrtc_ip && br.webrtc_ip !== ip.address
+          ? row('Mismatch', '<span class="v yes">YES — possible VPN leak ⚑</span>')
+          : row('Mismatch', '<span class="v no">NO ✓</span>')
+        }
+      </div>
+    </div>
+
+    <!-- GPS -->
+    <div class="card">
+      <div class="card-title">◈ GPS Location</div>
+      <div class="gps-box">
+        ${loc
+          ? `Lat: ${loc.latitude}, Lon: ${loc.longitude} (±${loc.accuracy})`
+          : '<span class="gps-na">Not granted or unavailable</span>'
+        }
+      </div>
+    </div>
+
+    <!-- User Agent -->
+    <div class="card">
+      <div class="card-title">◉ User Agent</div>
+      <div class="card-body">
+        ${row('Raw UA', `<span class="v" style="font-size:10px;word-break:break-all">${br.user_agent}</span>`)}
+      </div>
+    </div>
+
+    <!-- Login details -->
+    <div class="card">
+      <div class="card-title">◈ Login Attempt</div>
+      <div class="card-body">
+        ${row('Username',     val(d.login.username))}
+        ${row('Attempted at', val(d.login.attempted_at))}
+        ${row('Timestamp',    val(d.timestamp))}
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
